@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div
+      style="
+        border: solid 1px black;
+        width: 300px;
+        height: 300px;
+        overflow: auto;
+      "
+    >
+      <h1>현재 접속자</h1>
+      <ul id="userlist"></ul>
+    </div>
+    <div>
+      <ul
+        id="chatlist"
+        style="width: 600px; height: 300px; overflow: auto"
+      ></ul>
+      <div>
+        <input id="msg" type="text" />
+        <button id="sendbtn" type="button">Send</button>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      let username;
+
+      var socket = io();
+
+      document.addEventListener("DOMContentLoaded", function () {
+        username = prompt("닉네임 입력");
+
+        socket.emit("join", username);
+      });
+
+      // 서버에서 유저리스트 받아 처리
+      socket.on("userlist", (data) => {
+        let ihtml = ``;
+
+        for (let user of data) {
+          ihtml += `<li>${user.name}</li>`;
+        }
+
+        document.querySelector("#userlist").innerHTML = ihtml;
+      });
+
+      // 서버에서 로그정보 받아 처리
+      socket.on("log", (data) => {
+        let ilog = document.createElement("li");
+
+        ilog.style.color = "blue";
+        ilog.innerHTML = `${data}`;
+
+        document.querySelector("#chatlist").appendChild(ilog);
+      });
+
+      // 메세지 보내기
+      document.querySelector("#sendbtn").addEventListener("click", () => {
+        let data = {
+          name: username,
+          msg: document.querySelector("#msg").value,
+        };
+        document.querySelector("#msg").value = "";
+        socket.emit("msg", data);
+      });
+
+      // 서버에서 받은 메세지 정보 처리
+      socket.on("msg", (data) => {
+        let ilog = document.createElement("li");
+
+        ilog.innerHTML = `<strong>${data.name}</strong>&nbsp;&nbsp;&nbsp;&nbsp;${data.msg}`;
+
+        document.querySelector("#chatlist").appendChild(ilog);
+      });
+    </script>
+  </body>
+</html>
